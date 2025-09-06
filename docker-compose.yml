@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  tabx-api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - tabx-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: tabx_dev
+      POSTGRES_USER: tabx_user
+      POSTGRES_PASSWORD: tabx_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: unless-stopped
+    networks:
+      - tabx-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - tabx-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - tabx-api
+    restart: unless-stopped
+    networks:
+      - tabx-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  tabx-network:
+    driver: bridge
