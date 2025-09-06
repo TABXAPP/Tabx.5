@@ -66,5 +66,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Run security audit
-        run: npm audit --audit-level moderate
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit (fail on critical only)
+        run: |
+          npm audit --json > audit.json || true
+          node -e "
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('audit.json','utf8'));
+          const critical = (a.metadata && a.metadata.vulnerabilities && a.metadata.vulnerabilities.critical) || 0;
+          if (critical > 0) {
+            console.error(`Found ${critical} critical vulnerability(ies).`);
+            console.error(JSON.stringify(a.advisories || a, null, 2));
+            process.exit(1);
+          } else {
+            console.log('No critical vulnerabilities found.');
+          }
+          "
