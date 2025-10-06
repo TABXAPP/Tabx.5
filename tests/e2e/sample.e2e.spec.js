@@ -2,35 +2,7 @@
 // For this example, we'll simulate basic E2E scenarios
 
 const request = require('supertest')
-
-// Create app instance without starting server
 const app = require('../../src/app')
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to TABX Express API v5',
-    version: '5.0.0',
-    status: 'running'
-  })
-})
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl,
-    method: req.method
-  })
-})
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', err)
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-  })
-})
 
 describe('TABX API E2E Tests', () => {
   describe('Complete API Workflow', () => {
